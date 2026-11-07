@@ -1,13 +1,4 @@
 ---
-import '../styles/global.css';
-import PidSimulator from '../components/PidSimulator.jsx';
----
-
-<html lang="es">
-<!-- El resto de tu código sigue igual para abajo... -->
-
-
----
 import PidSimulator from '../components/PidSimulator.jsx';
 ---
 
@@ -17,42 +8,27 @@ import PidSimulator from '../components/PidSimulator.jsx';
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<title>Simulador PID - Misión Antivirus</title>
-		<style>
-			/* Animación de escaneo de fondo (cuadrícula) */
-			.bg-grid {
-				background-size: 40px 40px;
-				background-image: 
-					linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-					linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-			}
-			.glow-text {
-				text-shadow: 0 0 10px rgba(16,185,129,0.8), 0 0 20px rgba(16,185,129,0.4);
-			}
-		</style>
+		<!-- Cargamos Tailwind v4 por CDN para blindarlo contra errores de compilación local -->
+		<script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 	</head>
-	<body class="bg-black text-slate-100 min-h-screen font-sans bg-grid relative overflow-x-hidden selection:bg-emerald-500 selection:text-black">
+	<body class="bg-slate-950 text-slate-100 min-h-screen font-mono selection:bg-emerald-500 selection:text-black p-4 md:p-8">
 		
-		<!-- Luces de neón de fondo (blur) -->
-		<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-900/20 blur-[120px] rounded-full pointer-events-none"></div>
-		<div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-900/10 blur-[120px] rounded-full pointer-events-none"></div>
-
-		<main class="max-w-6xl mx-auto px-4 py-12 relative z-10">
-			<header class="mb-12 text-center">
-				<div class="inline-flex items-center gap-3 bg-emerald-950/40 px-6 py-2 border border-emerald-500/50 text-emerald-400 text-sm font-mono mb-6 shadow-[0_0_15px_rgba(16,185,129,0.2)] uppercase tracking-widest">
-					<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]"></span>
-					NÚCLEO_PID :: EN_LÍNEA
+		<main class="max-w-5xl mx-auto">
+			<header class="mb-10 text-center">
+				<div class="inline-block bg-slate-900 px-4 py-1 rounded-full text-emerald-400 text-xs mb-4 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+					[ NÚCLEO PID :: EN LÍNEA ]
 				</div>
-				<h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tighter uppercase glow-text text-white">
-					Simulador de Control CPU
+				<h1 class="text-3xl md:text-5xl font-bold mb-3 text-white tracking-wider">
+					Simulador de Control de CPU
 				</h1>
-				<p class="text-emerald-200/60 font-mono text-lg max-w-2xl mx-auto">
+				<p class="text-emerald-400/70 text-sm md:text-base">
 					&gt; Aplicación de la Transformada de Laplace para optimización de procesos_
 				</p>
 			</header>
 
-			<!-- Componente React -->
+			<!-- Componente interactivo -->
 			<PidSimulator client:load />
-
 		</main>
+
 	</body>
 </html>
