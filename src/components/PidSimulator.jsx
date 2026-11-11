@@ -17,8 +17,6 @@ export default function PidSimulator() {
   const prevError = useRef(0);
   const timeTick = useRef(0);
   const currentCpu = useRef(10);
-  
-  // Implementación del Retardo Puro e^(-Ts) propuesto en el trabajo futuro
   const delayBuffer = useRef([10, 10, 10, 10]); 
 
   useEffect(() => {
@@ -27,11 +25,9 @@ export default function PidSimulator() {
       interval = setInterval(() => {
         timeTick.current += 1;
 
-        // 1. Lectura con retardo (simula la ventana de medición del SO)
         delayBuffer.current.push(currentCpu.current);
         let delayedCpu = delayBuffer.current.shift();
 
-        // 2. Cálculo PID basado en la lectura retardada
         let error = SETPOINT - delayedCpu;
         integral.current += error;
         let derivative = error - prevError.current;
@@ -39,7 +35,6 @@ export default function PidSimulator() {
 
         let controlSignal = (kp * error) + (ki * integral.current) + (kd * derivative);
 
-        // 3. Planta Matemática exacta del informe (Euler: y += DT * (K*u - y) / TAU)
         let dt = 0.1;
         let tau = 2.0;
         let k_planta = 1.0;
@@ -47,15 +42,12 @@ export default function PidSimulator() {
         
         currentCpu.current += dy;
 
-        // 4. Ruido de fondo normal
         if (Math.random() > 0.95) {
           currentCpu.current += Math.random() * 5; 
         }
 
-        // 5. Límites físicos
         if (currentCpu.current < 0) currentCpu.current = 0;
         
-        // 6. Condición de Crash (Pantallazo)
         if (currentCpu.current >= 100) {
           currentCpu.current = 100;
           setIsCrashed(true);
@@ -85,7 +77,16 @@ export default function PidSimulator() {
 
   const injectMalware = () => {
     if (isRunning && !isCrashed) {
-      currentCpu.current += 60; // Pico de carga masivo
+      currentCpu.current += 60; 
+    }
+  };
+
+  // Funciones de Presets para la presentación
+  const applyPreset = (newKp, newKi, newKd) => {
+    if (!isRunning) {
+      setKp(newKp);
+      setKi(newKi);
+      setKd(newKd);
     }
   };
 
@@ -106,7 +107,7 @@ export default function PidSimulator() {
         </div>
       )}
 
-      <div className="h-64 md:h-96 w-full mb-8 bg-black/80 p-4 border border-emerald-500/20 relative shadow-[inset_0_0_30px_rgba(16,185,129,0.05)]">
+      <div className="h-64 md:h-96 w-full mb-6 bg-black/80 p-4 border border-emerald-500/20 relative shadow-[inset_0_0_30px_rgba(16,185,129,0.05)]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="2 4" stroke="#064e3b" vertical={false} />
@@ -119,11 +120,28 @@ export default function PidSimulator() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Botones de Escenarios / Presets (Solo se pueden tocar si está pausado) */}
+      <div className="mb-6 bg-slate-900/60 p-3 border border-emerald-900/50 flex flex-wrap gap-3 items-center justify-between">
+        <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Presets de Demostración:</span>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => applyPreset(1.0, 0.3, 1.0)} disabled={isRunning} className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 text-xs py-2 px-3 border border-emerald-600/60 transition-all disabled:opacity-40">
+            🟢 Modo Óptimo
+          </button>
+          <button onClick={() => applyPreset(1.5, 2.0, 0.0)} disabled={isRunning} className="bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-xs py-2 px-3 border border-amber-600/60 transition-all disabled:opacity-40">
+            🟡 Modo Oscilatorio
+          </button>
+          <button onClick={() => applyPreset(2.0, 8.0, 0.0)} disabled={isRunning} className="bg-red-950/80 hover:bg-red-900 text-red-300 text-xs py-2 px-3 border border-red-600/60 transition-all disabled:opacity-40">
+            🔴 Modo Caos (Inestable)
+          </button>
+        </div>
+      </div>
+
       {/* Controles PID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[ 
           { label: 'PROPORCIONAL (Kp)', val: kp, set: setKp, max: 20, step: 0.5 },
-          { label: 'INTEGRAL (Ki)', val: ki, set: setKi, max: 10, step: 0.1 }, // <--- Cambiado a step 0.1 y max 10
+          { label: 'INTEGRAL (Ki)', val: ki, set: setKi, max: 10, step: 0.1 },
           { label: 'DERIVATIVO (Kd)', val: kd, set: setKd, max: 5, step: 0.1 }
         ].map((ctrl, i) => (
           <div key={i} className="flex flex-col bg-black/60 p-5 border border-emerald-900 shadow-[inset_0_0_15px_rgba(16,185,129,0.05)] hover:border-emerald-500/50 transition-colors">
@@ -136,6 +154,7 @@ export default function PidSimulator() {
         ))}
       </div>
 
+      {/* Botonera Principal */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-4">
         {!isRunning ? (
           <button onClick={() => setIsRunning(true)} className="bg-emerald-500 text-black font-black py-4 px-10 border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] hover:shadow-[0_0_25px_rgba(16,185,129,0.9)] hover:bg-emerald-400 transition-all tracking-widest uppercase w-full md:w-auto">
