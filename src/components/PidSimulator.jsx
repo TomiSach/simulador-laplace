@@ -119,11 +119,11 @@ export default function PidSimulator() {
           </LineChart>
         </ResponsiveContainer>
       </div>
-
+      {/* Controles PID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[ 
           { label: 'PROPORCIONAL (Kp)', val: kp, set: setKp, max: 20, step: 0.5 },
-          { label: 'INTEGRAL (Ki)', val: ki, set: setKi, max: 30, step: 0.5 },
+          { label: 'INTEGRAL (Ki)', val: ki, set: setKi, max: 10, step: 0.1 }, // <--- Cambiado a step 0.1 y max 10
           { label: 'DERIVATIVO (Kd)', val: kd, set: setKd, max: 5, step: 0.1 }
         ].map((ctrl, i) => (
           <div key={i} className="flex flex-col bg-black/60 p-5 border border-emerald-900 shadow-[inset_0_0_15px_rgba(16,185,129,0.05)] hover:border-emerald-500/50 transition-colors">
