@@ -17,27 +17,45 @@ export default function PidSimulator() {
   const prevError = useRef(0);
   const timeTick = useRef(0);
   const currentCpu = useRef(10);
+  
+  // Implementación del Retardo Puro e^(-Ts) propuesto en el trabajo futuro
+  const delayBuffer = useRef([10, 10, 10, 10]); 
 
   useEffect(() => {
     let interval;
     if (isRunning && !isCrashed) {
       interval = setInterval(() => {
         timeTick.current += 1;
-        let error = SETPOINT - currentCpu.current;
+
+        // 1. Lectura con retardo (simula la ventana de medición del SO)
+        delayBuffer.current.push(currentCpu.current);
+        let delayedCpu = delayBuffer.current.shift();
+
+        // 2. Cálculo PID basado en la lectura retardada
+        let error = SETPOINT - delayedCpu;
         integral.current += error;
         let derivative = error - prevError.current;
         prevError.current = error;
 
         let controlSignal = (kp * error) + (ki * integral.current) + (kd * derivative);
-        let inercia = controlSignal * 0.15; 
-        currentCpu.current = currentCpu.current + inercia;
 
-        if (Math.random() > 0.90) {
-          currentCpu.current += Math.random() * 8; 
+        // 3. Planta Matemática exacta del informe (Euler: y += DT * (K*u - y) / TAU)
+        let dt = 0.1;
+        let tau = 2.0;
+        let k_planta = 1.0;
+        let dy = dt * ((k_planta * controlSignal) - currentCpu.current) / tau;
+        
+        currentCpu.current += dy;
+
+        // 4. Ruido de fondo normal
+        if (Math.random() > 0.95) {
+          currentCpu.current += Math.random() * 5; 
         }
 
+        // 5. Límites físicos
         if (currentCpu.current < 0) currentCpu.current = 0;
         
+        // 6. Condición de Crash (Pantallazo)
         if (currentCpu.current >= 100) {
           currentCpu.current = 100;
           setIsCrashed(true);
@@ -61,13 +79,19 @@ export default function PidSimulator() {
     prevError.current = 0;
     timeTick.current = 0;
     currentCpu.current = 10;
+    delayBuffer.current = [10, 10, 10, 10];
     setData(Array(MAX_HISTORY).fill({ time: 0, cpu: 10 }));
+  };
+
+  const injectMalware = () => {
+    if (isRunning && !isCrashed) {
+      currentCpu.current += 60; // Pico de carga masivo
+    }
   };
 
   return (
     <div className="bg-black/50 backdrop-blur-xl border border-emerald-500/30 rounded-sm p-4 md:p-8 shadow-[0_0_40px_rgba(16,185,129,0.1)] relative overflow-hidden font-mono">
       
-      {/* Marca de agua estilo HUD */}
       <div className="absolute top-2 left-4 text-emerald-500/20 text-xs tracking-widest pointer-events-none">
         SYS.ANTIVIRUS.PID.v1.0 // MATEMÁTICA_IV
       </div>
@@ -82,7 +106,6 @@ export default function PidSimulator() {
         </div>
       )}
 
-      {/* Gráfico */}
       <div className="h-64 md:h-96 w-full mb-8 bg-black/80 p-4 border border-emerald-500/20 relative shadow-[inset_0_0_30px_rgba(16,185,129,0.05)]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
@@ -97,12 +120,11 @@ export default function PidSimulator() {
         </ResponsiveContainer>
       </div>
 
-      {/* Controles PID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[ 
-          { label: 'PROPORCIONAL (Kp)', val: kp, set: setKp, max: 3, step: 0.1 },
-          { label: 'INTEGRAL (Ki)', val: ki, set: setKi, max: 8, step: 0.5 },
-          { label: 'DERIVATIVO (Kd)', val: kd, set: setKd, max: 2, step: 0.1 }
+          { label: 'PROPORCIONAL (Kp)', val: kp, set: setKp, max: 20, step: 0.5 },
+          { label: 'INTEGRAL (Ki)', val: ki, set: setKi, max: 30, step: 0.5 },
+          { label: 'DERIVATIVO (Kd)', val: kd, set: setKd, max: 5, step: 0.1 }
         ].map((ctrl, i) => (
           <div key={i} className="flex flex-col bg-black/60 p-5 border border-emerald-900 shadow-[inset_0_0_15px_rgba(16,185,129,0.05)] hover:border-emerald-500/50 transition-colors">
             <label className="text-emerald-500/70 text-xs mb-3 flex justify-between tracking-widest font-bold">
@@ -114,18 +136,20 @@ export default function PidSimulator() {
         ))}
       </div>
 
-      {/* Botonera */}
-      <div className="flex justify-center gap-6 mt-4">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-4 mt-4">
         {!isRunning ? (
-          <button onClick={() => setIsRunning(true)} className="bg-emerald-500 text-black font-black py-4 px-10 border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] hover:shadow-[0_0_25px_rgba(16,185,129,0.9)] hover:bg-emerald-400 transition-all tracking-widest uppercase">
+          <button onClick={() => setIsRunning(true)} className="bg-emerald-500 text-black font-black py-4 px-10 border border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.5)] hover:shadow-[0_0_25px_rgba(16,185,129,0.9)] hover:bg-emerald-400 transition-all tracking-widest uppercase w-full md:w-auto">
             [ INICIAR ESCANEO ]
           </button>
         ) : (
-          <button onClick={() => setIsRunning(false)} className="bg-transparent text-emerald-500 font-black py-4 px-10 border-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:bg-emerald-950 transition-all tracking-widest uppercase">
+          <button onClick={() => setIsRunning(false)} className="bg-transparent text-emerald-500 font-black py-4 px-10 border-2 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:bg-emerald-950 transition-all tracking-widest uppercase w-full md:w-auto">
             [ PAUSAR ]
           </button>
         )}
-        <button onClick={handleReset} className="bg-transparent text-slate-400 border border-slate-700 py-4 px-8 hover:text-white hover:border-slate-500 transition-all tracking-widest uppercase">
+        <button onClick={injectMalware} className="bg-red-950/50 text-red-500 border border-red-800 py-4 px-6 hover:bg-red-900 hover:text-white transition-all tracking-widest uppercase text-sm w-full md:w-auto">
+          ⚠ Inyectar Malware
+        </button>
+        <button onClick={handleReset} className="bg-transparent text-slate-400 border border-slate-700 py-4 px-8 hover:text-white hover:border-slate-500 transition-all tracking-widest uppercase w-full md:w-auto">
           RESET
         </button>
       </div>
